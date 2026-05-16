@@ -1,0 +1,365 @@
+/* globals.css */
+
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg:        #0a0a0a;
+  --lime:      #d4f500;
+  --white:     #ffffff;
+  --muted:     #333333;
+  --glass:     rgba(255, 255, 255, 0.03);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: var(--bg);
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--white);
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+  /* hide scroll during splash */
+  overflow-y: hidden;
+}
+
+body.ready {
+  overflow-y: auto;
+}
+
+/* utility */
+.font-display {
+  font-family: 'Bebas Neue', sans-serif;
+}
+
+/* smooth scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--lime);
+  border-radius: 2px;
+}
+.bg-stars {
+  background: repeating-radial-gradient(#fff 0 1px, transparent 1px 100%);
+  background-size: 3px 3px;
+  opacity: 0.02;
+}
+
+
+/* === Sleek Scrollbar Styling === */
+::-webkit-scrollbar {
+ width: 6px;
+}
+
+::-webkit-scrollbar-track {
+ background: rgba(255, 255, 255, 0.05);
+ border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+ background: linear-gradient(180deg, #333, #333);
+ border-radius: 10px;
+ box-shadow: 0 0 6px rgba(0,212,255,0.4);
+}
+
+::-webkit-scrollbar-thumb:hover {
+ background: linear-gradient(180deg, #333, #333);
+}
+
+
+
+.word:hover {
+  transform: translateY(-5px) scale(1.1);
+  color: #d8b4fe; /* light purple glow */
+  transition: all 0.3s ease;
+}
+
+
+    
+    @layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 9%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem
+  }
+  .dark {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%
+  }
+}
+    
+    @layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+img{
+  width:100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/**img{
+  width:100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+h1{
+  font-size:7.5rem;
+  font-weight: 500;
+  letter-spacing: -0.2rem;
+  line-height: 1;
+}
+
+p{
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+a{
+  text-decoration: none;
+  color: gray;
+  font-size: 1.5rem;
+  font-size: 500;
+}
+
+section{
+  position: relative;
+  width: 100vw;
+  height: 100svh;
+  padding: 2rem;
+ 
+  justify-content: center;
+  overflow: hidden;
+}**/
+
+/* Fullscreen cinematic overlay */
+.splash-wrapper {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at top, #1f2937 0%, #020617 45%, #000 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  perspective: 1200px;
+  transform-style: preserve-3d;
+  z-index: 9999; /* above everything */
+}
+
+/* Inner container (so we can fade the whole thing) */
+.splash-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* Cinematic images */
+.splash-image {
+  position: absolute;
+  width: 130%;       /* a bit larger for rotation/perspective */
+  max-width: none;
+  height: auto;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  object-fit: cover;
+  will-change: transform, opacity, filter;
+  pointer-events: none;
+}
+
+
+/* Fullscreen cinematic overlay (reuse/extend yours) */
+.splash-wrapper {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at top, #111827 0%, #020617 45%, #000 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  perspective: 1200px;
+  transform-style: preserve-3d;
+  z-index: 9999;
+}
+
+.splash-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* Project panels */
+.splash-panel {
+  position: absolute;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.9);
+  background: radial-gradient(circle at top, #111827, #020617);
+  will-change: transform, opacity, filter;
+}
+
+.splash-panel img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Positions for up to 5 panels */
+.splash-panel--tl {
+  top: 8%;
+  left: 4%;
+  width: 30vw;
+  max-width: 420px;
+  aspect-ratio: 4 / 3;
+}
+
+.splash-panel--tr {
+  top: 14%;
+  right: 6%;
+  width: 26vw;
+  max-width: 360px;
+  aspect-ratio: 4 / 3;
+}
+
+.splash-panel--bl {
+  bottom: 8%;
+  left: 12%;
+  width: 24vw;
+  max-width: 340px;
+  aspect-ratio: 4 / 3;
+}
+
+.splash-panel--br {
+  bottom: 10%;
+  right: 10%;
+  width: 28vw;
+  max-width: 380px;
+  aspect-ratio: 4 / 3;
+}
+
+.splash-panel--center {
+  top: 50%;
+  left: 50%;
+  width: 34vw;
+  max-width: 460px;
+  aspect-ratio: 16 / 10;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+
+
+
+
+/* Fullscreen 3D tunnel overlay */
+.tunnel-wrapper {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at top, #111827 0%, #020617 45%, #000 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  perspective: 1400px;
+  transform-style: preserve-3d;
+  z-index: 9999;
+}
+
+/* 3D scene we move (camera effect) */
+.tunnel-scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+/* Individual frames in the tunnel */
+.tunnel-frame {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-style: preserve-3d;
+  width: 40vw;
+  max-width: 520px;
+  aspect-ratio: 16 / 10;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.9);
+  background: radial-gradient(circle at top, #1f2937, #020617);
+  will-change: transform, opacity, filter;
+  pointer-events: none;
+}
+
+.tunnel-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
