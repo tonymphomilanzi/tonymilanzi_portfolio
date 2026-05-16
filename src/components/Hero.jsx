@@ -339,8 +339,7 @@ const Hero = () => {
             <div className="absolute -right-10 top-0 text-[6px] font-mono text-[#d4f500]/30">Y.00</div>
             <div className="absolute -right-10 bottom-0 text-[6px] font-mono text-[#d4f500]/30">Y.99</div>
             <div ref={scrollHintIndicatorRef} className="absolute right-[-4px] top-0 flex items-center">
-                <div className="w-4 h-[1px] bg-[#d4f500] shadow-[0_0_10px_#d4f500]" />
-                <div className="ml-1 text-[7px] font-mono text-[#d4f500] opacity-80">POS_LVL</div>
+                
             </div>
         </div>
       </div>
