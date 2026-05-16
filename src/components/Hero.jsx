@@ -5,7 +5,63 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
-// ─── Ruler Grid Background (RESTORED TO ORIGINAL) ──────────────────────────
+// ─── NEW: CUSTOM CURSOR COMPONENT ───────────────────────────────────────────
+const CustomCursor = () => {
+    const cursorRef = useRef(null);
+    const followerRef = useRef(null);
+    const labelRef = useRef(null);
+
+    useGSAP(() => {
+        const cursor = cursorRef.current;
+        const follower = followerRef.current;
+        
+        // QuickTo is more optimized for high-frequency updates like mouse moves
+        const xTo = gsap.quickTo(follower, "x", { duration: 0.6, ease: "power3.out" });
+        const yTo = gsap.quickTo(follower, "y", { duration: 0.6, ease: "power3.out" });
+        
+        const xTargetTo = gsap.quickTo(cursor, "x", { duration: 0.1, ease: "none" });
+        const yTargetTo = gsap.quickTo(cursor, "y", { duration: 0.1, ease: "none" });
+
+        const handleMouseMove = (e) => {
+            const { clientX, clientY } = e;
+            xTo(clientX);
+            yTo(clientY);
+            xTargetTo(clientX);
+            yTargetTo(clientY);
+            
+            if (labelRef.current) {
+                labelRef.current.innerText = `${Math.round(clientX)},${Math.round(clientY)}`;
+            }
+        };
+
+        window.addEventListener("mousemove", handleMouseMove);
+        return () => window.removeEventListener("mousemove", handleMouseMove);
+    }, []);
+
+    return (
+        <>
+            {/* The lagging circle */}
+            <div 
+                ref={followerRef} 
+                className="fixed top-0 left-0 w-12 h-12 border border-[#d4f500]/30 rounded-full pointer-events-none z-[9999] -ml-6 -mt-6 flex items-center justify-center transition-opacity duration-300"
+            >
+                {/* Internal crosshair */}
+                <div className="w-[1px] h-2 bg-[#d4f500]/20 absolute top-0" />
+                <div className="w-[1px] h-2 bg-[#d4f500]/20 absolute bottom-0" />
+                <div className="h-[1px] w-2 bg-[#d4f500]/20 absolute left-0" />
+                <div className="h-[1px] w-2 bg-[#d4f500]/20 absolute right-0" />
+            </div>
+
+            {/* The sharp point and coordinates */}
+            <div ref={cursorRef} className="fixed top-0 left-0 pointer-events-none z-[9999] -ml-1 -mt-1">
+                <div className="w-2 h-2 bg-[#d4f500] rounded-full shadow-[0_0_10px_#d4f500]" />
+                <div ref={labelRef} className="ml-4 mt-2 font-mono text-[7px] text-[#d4f500] opacity-50 uppercase tracking-tighter" />
+            </div>
+        </>
+    );
+};
+
+// ─── Ruler Grid Background ───────────────────────────────────────────────────
 const RulerGrid = () => {
     const STEP = 80;
     const TICK_SMALL = 6;
@@ -31,6 +87,7 @@ const RulerGrid = () => {
             <line x1="0" y1={(STEP * 3) / 4} x2={TICK_SMALL} y2={(STEP * 3) / 4} stroke="#d4f500" strokeWidth="0.4" />
             <circle cx={STEP} cy={STEP} r="1.2" fill="#d4f500" opacity="0.5" />
           </pattern>
+          {/* patterns remain the same */}
           <pattern id="rulerTop" x="0" y="0" width={STEP} height="24" patternUnits="userSpaceOnUse">
             <rect width={STEP} height="24" fill="#0a0a0a" />
             <line x1={STEP} y1="0" x2={STEP} y2="24" stroke="#d4f500" strokeWidth="0.4" />
@@ -75,7 +132,7 @@ const RulerGrid = () => {
     );
   };
 
-// ─── Tilt Components (RESTORED) ─────────────────────────────────────────────
+// (TiltImage, ProjectGallery, TiltText, MusicWave remain unchanged)
 const TiltImage = ({ src }) => {
     const imgRef = useRef(null);
     const onMove = (e) => {
@@ -196,7 +253,7 @@ const Hero = () => {
   const scrollHintIndicatorRef = useRef(null);
 
   useGSAP(() => {
-    // Indicator Animation
+    // Indicator Animation for the Scroll Hint
     if (scrollHintIndicatorRef.current) {
         gsap.fromTo(scrollHintIndicatorRef.current,
             { y: 0, opacity: 0.4 },
@@ -233,6 +290,9 @@ const Hero = () => {
 
   return (
     <section ref={sectionRef} className="hero-section relative min-h-screen w-full overflow-hidden bg-[#0a0a0a]">
+      {/* ─── ADDED CUSTOM CURSOR ─── */}
+      <CustomCursor />
+      
       <MusicWave />
 
       <div ref={galleryRef} className="absolute inset-0 z-[1] will-change-transform">
@@ -261,51 +321,27 @@ const Hero = () => {
         ))}
       </div>
 
-      {/* ─── SIDE VERTICAL SCROLL RULER ─── */}
+      {/* ─── VERTICAL SCROLL RULER (ON RIGHT) ─── */}
       <div 
         ref={scrollHintRef} 
         className="fixed right-10 top-1/2 -translate-y-1/2 z-[50] flex items-center gap-4 select-none pointer-events-none group"
       >
-        {/* Scroll Label */}
         <div className="flex flex-col items-center gap-2">
-            <span className="text-[7px] font-mono text-[#d4f500]/40 tracking-widest uppercase [writing-mode:vertical-lr] rotate-180">
-                TO EXPLORE
-            </span>
+            <span className="text-[7px] font-mono text-[#d4f500]/40 tracking-widest uppercase [writing-mode:vertical-lr] rotate-180">Measurement</span>
             <div className="w-[1px] h-8 bg-[#d4f500]/20" />
-            <span className="text-[9px] font-mono text-[#d4f500] uppercase [writing-mode:vertical-lr] rotate-180 tracking-[0.6em] font-bold">
-                Scroll
-            </span>
+            <span className="text-[9px] font-mono text-[#d4f500] uppercase [writing-mode:vertical-lr] rotate-180 tracking-[0.6em] font-bold">Scroll</span>
         </div>
 
-        {/* Ruler Track */}
         <div className="relative h-[120px] w-6 flex items-start justify-end pr-1 border-r border-[#d4f500]/20">
-            {/* Tick Marks */}
             {Array.from({ length: 13 }).map((_, i) => (
-                <div 
-                    key={i} 
-                    className="absolute right-0 bg-[#d4f500]/40" 
-                    style={{ 
-                        top: `${(i * 10)}%`, 
-                        height: '1px', 
-                        width: i % 4 === 0 ? '8px' : '4px',
-                        opacity: i % 4 === 0 ? 0.6 : 0.3
-                    }} 
-                />
+                <div key={i} className="absolute right-0 bg-[#d4f500]/40" style={{ top: `${(i * 10)}%`, height: '1px', width: i % 4 === 0 ? '8px' : '4px', opacity: i % 4 === 0 ? 0.6 : 0.3 }} />
             ))}
-            
-            {/* Coordinate markers */}
             <div className="absolute -right-10 top-0 text-[6px] font-mono text-[#d4f500]/30">Y.00</div>
             <div className="absolute -right-10 bottom-0 text-[6px] font-mono text-[#d4f500]/30">Y.99</div>
-
-            {/* Moving Guideline Indicator 
-                ref={scrollHintIndicatorRef}
-                className="absolute right-[-4px] top-0 flex items-center"
-            >
+            <div ref={scrollHintIndicatorRef} className="absolute right-[-4px] top-0 flex items-center">
                 <div className="w-4 h-[1px] bg-[#d4f500] shadow-[0_0_10px_#d4f500]" />
                 <div className="ml-1 text-[7px] font-mono text-[#d4f500] opacity-80">POS_LVL</div>
-            </div>*/}</div>
-
-            <div>
+            </div>
         </div>
       </div>
     </section>
