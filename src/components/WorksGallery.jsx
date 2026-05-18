@@ -1,594 +1,243 @@
-import React, {
-  useRef,
-  useMemo,
-  useState,
-  useEffect,
-} from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import * as THREE from "three";
+import React, { useRef, useState, useEffect } from 'react';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-// ─── CONFIG ───────────────────────────────────────────────────────────────────
-const CONFIG = {
-  cols: 7,
-  rows: 6,
-  tileW: 2.2,
-  tileH: 1.6,
-  gapX: 0.06,
-  gapY: 0.06,
-  inertia: 0.88,       // drag lag/smoothness
-  tiltAmt: 0.12,       // 3D tilt intensity
-  dragSpeed: 1.4,
-};
+gsap.registerPlugin(ScrollTrigger);
 
-// ─── PROJECT DATA ─────────────────────────────────────────────────────────────
-const TOTAL = CONFIG.cols * CONFIG.rows;
-const PROJECTS = Array.from({ length: TOTAL }, (_, i) => ({
-  id: i,
-  url: `https://picsum.photos/seed/${i + 10}/400/300`,
-  year: `${2020 + (i % 5)}`,
-  tags: [
-    ["EXPERIENCE", "WEBSITE", "3D"],
-    ["COMMUNICATION", "CAMPAIGN", "SOCIAL"],
-    ["FILM", "BRAND", "IDENTITY"],
-    ["PRODUCT", "PLATFORM", "UX"],
-    ["STRATEGY", "CONTENT", "AR"],
-  ][i % 5],
-  client: [
-    "GOOGLE", "NETFLIX", "APPLE", "DIAGEO", "NIKE",
-    "MONDAY", "PHANTOM", "SKYSCANNER", "SONY", "TESLA",
-  ][i % 10],
-}));
+// ─── DATA ──────────────────────────────────────────────────────────────────
+const projects = [
+  { id: '01', title: 'AURA', tag: 'Web / WebGL', media: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNGJxeXNwaHlyZ2N6bmJ6YXR3YmJ6bmJ6YXR3YmJ6bmJ6YXR3YmJ6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/3o7TKMGpxxZESnlIQg/giphy.gif' },
+  { id: '02', title: 'NEXUS', tag: 'Identity', media: 'https://images.unsplash.com/photo-1558655146-d09347e92766?q=80&w=600' },
+  { id: '03', title: 'LUMINA', tag: 'E-Commerce', media: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNGJxeXNwaHlyZ2N6bmJ6YXR3YmJ6bmJ6YXR3YmJ6bmJ6YXR3YmJ6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/l41lTfuxZ75zC0nSg/giphy.gif' },
+  { id: '04', title: 'ECHO', tag: '3D Motion', media: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=600' },
+  { id: '05', title: 'SYNTH', tag: 'UI System', media: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNGJxeXNwaHlyZ2N6bmJ6YXR3YmJ6bmJ6YXR3YmJ6bmJ6YXR3YmJ6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/3o7TKVUn7iM8FMEU24/giphy.gif' },
+  { id: '06', title: 'VERTEX', tag: 'Branding', media: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=600' },
+  { id: '07', title: 'QUANTUM', tag: 'Spatial', media: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600' },
+  { id: '08', title: 'PULSE', tag: 'App Design', media: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNGJxeXNwaHlyZ2N6bmJ6YXR3YmJ6bmJ6YXR3YmJ6bmJ6YXR3YmJ6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/xT9IgN8YKUIqYIK4Jq/giphy.gif' },
+  { id: '09', title: 'CRUX', tag: 'Campaign', media: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=600' },
+  { id: '10', title: 'OMNI', tag: 'Platform', media: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=600' },
+  { id: '11', title: 'FLUX', tag: 'Identity', media: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=600' },
+  { id: '12', title: 'NOVA', tag: 'Motion', media: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=600' },
+];
 
-// ─── CUSTOM CURSOR ────────────────────────────────────────────────────────────
-const CustomCursor = ({ isDragging }) => {
-  const ringRef = useRef(null);
-  const dotRef = useRef(null);
-  const actual = useRef({ x: -300, y: -300 });
-  const smooth = useRef({ x: -300, y: -300 });
-  const raf = useRef(null);
+const WorkGallery = () => {
+  const sectionRef = useRef(null);
+  const wrapperRef = useRef(null);
+  const gridRef = useRef(null);
+  const hintRef = useRef(null);
+  const [isMobile, setIsMobile] = useState(false);
 
-  useEffect(() => {
-    const onMove = (e) => { actual.current = { x: e.clientX, y: e.clientY }; };
-    window.addEventListener("mousemove", onMove);
-    return () => window.removeEventListener("mousemove", onMove);
-  }, []);
-
-  useEffect(() => {
-    const tick = () => {
-      smooth.current.x += (actual.current.x - smooth.current.x) * 0.1;
-      smooth.current.y += (actual.current.y - smooth.current.y) * 0.1;
-      const s = isDragging ? 54 : 40;
-      if (ringRef.current) {
-        ringRef.current.style.transform = `translate(${smooth.current.x - s / 2}px,${smooth.current.y - s / 2}px)`;
-        ringRef.current.style.width = `${s}px`;
-        ringRef.current.style.height = `${s}px`;
-      }
-      if (dotRef.current) {
-        dotRef.current.style.transform = `translate(${actual.current.x - 3}px,${actual.current.y - 3}px)`;
-      }
-      raf.current = requestAnimationFrame(tick);
-    };
-    raf.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf.current);
-  }, [isDragging]);
-
-  return (
-    <>
-      <div
-        ref={ringRef}
-        className="fixed top-0 left-0 pointer-events-none z-[9999] rounded-full flex items-center justify-center"
-        style={{
-          border: isDragging ? "1.5px solid rgba(255,255,255,0.85)" : "1.5px solid rgba(255,255,255,0.3)",
-          background: isDragging ? "rgba(255,255,255,0.04)" : "transparent",
-          willChange: "transform, width, height",
-          transition: "border-color 0.25s, background-color 0.25s",
-        }}
-      >
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-          style={{ opacity: isDragging ? 1 : 0.45, transition: "opacity 0.2s" }}>
-          {isDragging ? (
-            <path d="M9 11V6a1 1 0 0 1 2 0v3m0 0V5a1 1 0 0 1 2 0v4m0 0V6a1 1 0 0 1 2 0v4m0 0a1 1 0 0 1 2 0v3c0 3.314-2.686 6-6 6H9a6 6 0 0 1-6-6V9a1 1 0 0 1 2 0v2"
-              stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          ) : (
-            <path d="M7 11.5V7a1 1 0 0 1 2 0v3.5M9 7V4a1 1 0 0 1 2 0v5M11 5a1 1 0 0 1 2 0v4m0 0a1 1 0 0 1 2 0v3.5A5.5 5.5 0 0 1 9.5 18H9a5 5 0 0 1-5-5v-2a1 1 0 0 1 2 0v1.5"
-              stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          )}
-        </svg>
-      </div>
-      <div
-        ref={dotRef}
-        className="fixed top-0 left-0 pointer-events-none z-[9999] w-1.5 h-1.5 rounded-full bg-white"
-        style={{ willChange: "transform" }}
-      />
-    </>
-  );
-};
-
-// ─── TEXTURE TILE (Three.js mesh) ─────────────────────────────────────────────
-const TileMesh = ({ project, position, gridPos, onProjectClick }) => {
-  const meshRef = useRef();
-  const borderRef = useRef();
-  const [hovered, setHovered] = useState(false);
-  const [tex, setTex] = useState(null);
-  const scaleTarget = useRef(new THREE.Vector3(1, 1, 1));
-
-  // Load texture
-  useEffect(() => {
-    const loader = new THREE.TextureLoader();
-    loader.crossOrigin = "anonymous";
-    const t = loader.load(project.url, (loaded) => {
-      loaded.minFilter = THREE.LinearFilter;
-      loaded.magFilter = THREE.LinearFilter;
-      setTex(loaded);
-    });
-    return () => t?.dispose();
-  }, [project.url]);
-
-  useFrame(() => {
-    if (!meshRef.current) return;
-    scaleTarget.current.set(
-      hovered ? 1.04 : 1,
-      hovered ? 1.04 : 1,
-      1
-    );
-    meshRef.current.scale.lerp(scaleTarget.current, 0.1);
+  // ─── CONFIG ───
+  // Using State to handle window-dependent units
+  const [layout, setLayout] = useState({
+    itemDim: 0, 
+    cols: 4, 
+    rows: 3, 
+    speed: 0.4
   });
 
-  if (!tex) {
-    // Skeleton
-    return (
-      <mesh position={position}>
-        <planeGeometry args={[CONFIG.tileW, CONFIG.tileH]} />
-        <meshBasicMaterial color="#1a1a1a" />
-      </mesh>
-    );
-  }
-
-  return (
-    <group position={position}>
-      {/* Main image plane */}
-      <mesh
-        ref={meshRef}
-        onPointerOver={(e) => { e.stopPropagation(); setHovered(true); document.body.style.cursor = "none"; }}
-        onPointerOut={() => { setHovered(false); document.body.style.cursor = "none"; }}
-        onClick={(e) => { e.stopPropagation(); onProjectClick(project); }}
-      >
-        <planeGeometry args={[CONFIG.tileW, CONFIG.tileH]} />
-        <meshBasicMaterial map={tex} toneMapped={false} />
-      </mesh>
-
-      {/* Hover border */}
-      <mesh position={[0, 0, -0.001]} visible={hovered}>
-        <planeGeometry args={[CONFIG.tileW + 0.04, CONFIG.tileH + 0.04]} />
-        <meshBasicMaterial color="#ffffff" transparent opacity={0.12} />
-      </mesh>
-
-      {/* Bottom meta overlay — small text via canvas texture */}
-      <MetaOverlay project={project} tileW={CONFIG.tileW} tileH={CONFIG.tileH} />
-    </group>
-  );
-};
-
-// ─── META OVERLAY (canvas → texture) ─────────────────────────────────────────
-const MetaOverlay = ({ project, tileW, tileH }) => {
-  const [tex, setTex] = useState(null);
-
   useEffect(() => {
-    const W = 400, H = 300;
-    const canvas = document.createElement("canvas");
-    canvas.width = W;
-    canvas.height = H;
-    const ctx = canvas.getContext("2d");
-
-    // Bottom gradient
-    const grad = ctx.createLinearGradient(0, H * 0.55, 0, H);
-    grad.addColorStop(0, "rgba(0,0,0,0)");
-    grad.addColorStop(1, "rgba(0,0,0,0.72)");
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, W, H);
-
-    // Year — top left tiny
-    ctx.font = "bold 13px monospace";
-    ctx.fillStyle = "rgba(255,255,255,0.25)";
-    ctx.fillText(project.year, 10, 22);
-
-    // Client — top left
-    ctx.font = "bold 11px monospace";
-    ctx.fillStyle = "rgba(255,255,255,0.35)";
-    ctx.fillText(project.client, 10, 36);
-
-    // Tags — bottom
-    ctx.font = "9px monospace";
-    ctx.fillStyle = "rgba(255,255,255,0.3)";
-    const tagStr = project.tags.join("  ·  ");
-    ctx.fillText(tagStr, 10, H - 10);
-
-    const t = new THREE.CanvasTexture(canvas);
-    t.minFilter = THREE.LinearFilter;
-    setTex(t);
-    return () => t.dispose();
-  }, [project]);
-
-  if (!tex) return null;
-
-  return (
-    <mesh position={[0, 0, 0.001]}>
-      <planeGeometry args={[tileW, tileH]} />
-      <meshBasicMaterial map={tex} transparent toneMapped={false} />
-    </mesh>
-  );
-};
-
-// ─── INFINITE PAN GRID ────────────────────────────────────────────────────────
-const InfiniteScene = ({ onProjectClick, isAnimatingIn }) => {
-  const { viewport, size, gl } = useThree();
-  const groupRef = useRef();
-
-  // Pan state
-  const targetPan = useRef(new THREE.Vector2(0, 0));
-  const currentPan = useRef(new THREE.Vector2(0, 0));
-  const velocity = useRef(new THREE.Vector2(0, 0));
-  const isDragging = useRef(false);
-  const lastMouse = useRef({ x: 0, y: 0 });
-  const lastTime = useRef(0);
-
-  // Grid dimensions
-  const stepX = CONFIG.tileW + CONFIG.gapX;
-  const stepY = CONFIG.tileH + CONFIG.gapY;
-  const totalW = CONFIG.cols * stepX;
-  const totalH = CONFIG.rows * stepY;
-
-  // Pre-compute base positions (centered)
-  const items = useMemo(() => {
-    const list = [];
-    const offsetX = -((CONFIG.cols - 1) * stepX) / 2;
-    const offsetY = -((CONFIG.rows - 1) * stepY) / 2;
-    for (let r = 0; r < CONFIG.rows; r++) {
-      for (let c = 0; c < CONFIG.cols; c++) {
-        const idx = r * CONFIG.cols + c;
-        list.push({
-          project: PROJECTS[idx % PROJECTS.length],
-          baseX: offsetX + c * stepX,
-          baseY: offsetY + r * stepY,
-          col: c,
-          row: r,
+    const handleResize = () => {
+        const mobile = window.innerWidth < 768;
+        setIsMobile(mobile);
+        setLayout({
+            itemDim: mobile ? window.innerWidth * 0.7 : window.innerWidth * 0.25,
+            cols: mobile ? 2 : 4,
+            rows: mobile ? 6 : 3,
+            speed: mobile ? 0.2 : 0.4
         });
-      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useGSAP(() => {
+    if (layout.itemDim === 0) return;
+
+    // ─── 1. HINT ANIMATION (Desktop Cursor Follow) ───
+    if (!isMobile) {
+        const moveHint = (e) => {
+            gsap.to(hintRef.current, {
+                x: e.clientX,
+                y: e.clientY,
+                duration: 0.7,
+                ease: "power3.out"
+            });
+        };
+        window.addEventListener('mousemove', moveHint);
+        return () => window.removeEventListener('mousemove', moveHint);
     }
-    return list;
-  }, [stepX, stepY]);
 
-  // Entrance animation
-  const entranceProgress = useRef(0);
-  const entranceComplete = useRef(false);
+    // ─── 2. SCROLL ENTRY ───
+    ScrollTrigger.create({
+      trigger: sectionRef.current,
+      start: "top top",
+      end: "+=150%",
+      pin: true,
+      animation: gsap.fromTo(wrapperRef.current, 
+        { scale: 0.8, rotationX: 15, opacity: 0, y: 100 },
+        { scale: 1, rotationX: 0, opacity: 1, y: 0, ease: "power2.out" }
+      ),
+      scrub: 1,
+    });
 
-  // Input
-  useEffect(() => {
-    const canvas = gl.domElement;
+    // ─── 3. INFINITE PAN ───
+    const grid = gridRef.current;
+    const BW = layout.itemDim * layout.cols;
+    const BH = layout.itemDim * layout.rows;
+
+    let targetX = -BW, targetY = -BH;
+    let currentX = -BW, currentY = -BH;
+    let isDragging = false, startX = 0, startY = 0;
+
+    const ticker = () => {
+      if (!isDragging) {
+        targetX -= layout.speed;
+        targetY -= layout.speed * 0.5;
+      }
+
+      if (targetX > 0) { targetX -= BW; currentX -= BW; }
+      if (targetX < -BW * 2) { targetX += BW; currentX += BW; }
+      if (targetY > 0) { targetY -= BH; currentY -= BH; }
+      if (targetY < -BH * 2) { targetY += BH; currentY += BH; }
+
+      currentX += (targetX - currentX) * 0.08;
+      currentY += (targetY - currentY) * 0.08;
+      gsap.set(grid, { x: currentX, y: currentY });
+    };
+
+    gsap.ticker.add(ticker);
 
     const onDown = (e) => {
-      isDragging.current = true;
-      lastMouse.current = { x: e.clientX, y: e.clientY };
-      lastTime.current = performance.now();
-      velocity.current.set(0, 0);
+      isDragging = true;
+      const x = e.clientX || e.touches[0].clientX;
+      const y = e.clientY || e.touches[0].clientY;
+      startX = x - targetX;
+      startY = y - targetY;
     };
-
-    const onUp = () => {
-      if (!isDragging.current) return;
-      isDragging.current = false;
-      // Momentum: hand off velocity to target
-      targetPan.current.x += velocity.current.x * 8;
-      targetPan.current.y += velocity.current.y * 8;
-    };
-
     const onMove = (e) => {
-      if (!isDragging.current) return;
-      const now = performance.now();
-      const dt = Math.max(now - lastTime.current, 1);
-      const dx = e.clientX - lastMouse.current.x;
-      const dy = e.clientY - lastMouse.current.y;
-
-      const worldX = (dx / size.width) * viewport.width * CONFIG.dragSpeed;
-      const worldY = (dy / size.height) * viewport.height * CONFIG.dragSpeed;
-
-      targetPan.current.x += worldX;
-      targetPan.current.y -= worldY;
-
-      // Track velocity for momentum
-      velocity.current.x = worldX / (dt / 16);
-      velocity.current.y = -worldY / (dt / 16);
-
-      lastMouse.current = { x: e.clientX, y: e.clientY };
-      lastTime.current = now;
+      if (!isDragging) return;
+      const x = e.clientX || (e.touches ? e.touches[0].clientX : 0);
+      const y = e.clientY || (e.touches ? e.touches[0].clientY : 0);
+      targetX = x - startX;
+      targetY = y - startY;
     };
+    const onUp = () => isDragging = false;
 
-    // Touch
-    const onTouchStart = (e) => {
-      isDragging.current = true;
-      lastMouse.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-      lastTime.current = performance.now();
-      velocity.current.set(0, 0);
-    };
-    const onTouchEnd = () => {
-      isDragging.current = false;
-      targetPan.current.x += velocity.current.x * 8;
-      targetPan.current.y += velocity.current.y * 8;
-    };
-    const onTouchMove = (e) => {
-      if (!isDragging.current) return;
-      const now = performance.now();
-      const dt = Math.max(now - lastTime.current, 1);
-      const dx = e.touches[0].clientX - lastMouse.current.x;
-      const dy = e.touches[0].clientY - lastMouse.current.y;
-      const worldX = (dx / size.width) * viewport.width * CONFIG.dragSpeed;
-      const worldY = (dy / size.height) * viewport.height * CONFIG.dragSpeed;
-      targetPan.current.x += worldX;
-      targetPan.current.y -= worldY;
-      velocity.current.x = worldX / (dt / 16);
-      velocity.current.y = -worldY / (dt / 16);
-      lastMouse.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-      lastTime.current = now;
-    };
-
-    canvas.addEventListener("mousedown", onDown);
-    window.addEventListener("mouseup", onUp);
-    window.addEventListener("mousemove", onMove);
-    canvas.addEventListener("touchstart", onTouchStart, { passive: true });
-    window.addEventListener("touchend", onTouchEnd);
-    window.addEventListener("touchmove", onTouchMove, { passive: true });
+    grid.addEventListener('pointerdown', onDown);
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
 
     return () => {
-      canvas.removeEventListener("mousedown", onDown);
-      window.removeEventListener("mouseup", onUp);
-      window.removeEventListener("mousemove", onMove);
-      canvas.removeEventListener("touchstart", onTouchStart);
-      window.removeEventListener("touchend", onTouchEnd);
-      window.removeEventListener("touchmove", onTouchMove);
+      gsap.ticker.remove(ticker);
+      grid.removeEventListener('pointerdown', onDown);
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
     };
-  }, [viewport, size, gl]);
-
-  useFrame(() => {
-    if (!groupRef.current) return;
-
-    // ── Entrance camera zoom ──
-    if (isAnimatingIn && !entranceComplete.current) {
-      entranceProgress.current = Math.min(entranceProgress.current + 0.012, 1);
-      const e = 1 - Math.pow(1 - entranceProgress.current, 3);
-      groupRef.current.position.z = THREE.MathUtils.lerp(-6, 0, e);
-      groupRef.current.children.forEach((child, idx) => {
-        const delay = (idx / groupRef.current.children.length) * 0.4;
-        const childE = Math.max(0, Math.min(1, (entranceProgress.current - delay) / 0.6));
-        child.scale.setScalar(THREE.MathUtils.lerp(0.7, 1, childE));
-        if (child.material) {
-          child.material.opacity = childE;
-        }
-      });
-      if (entranceProgress.current >= 1) entranceComplete.current = true;
-    }
-
-    // ── Inertia pan ──
-    const lerpF = 1 - CONFIG.inertia;
-    currentPan.current.x = THREE.MathUtils.lerp(currentPan.current.x, targetPan.current.x, lerpF);
-    currentPan.current.y = THREE.MathUtils.lerp(currentPan.current.y, targetPan.current.y, lerpF);
-
-    // ── Tilt ──
-    const lagX = targetPan.current.x - currentPan.current.x;
-    const lagY = targetPan.current.y - currentPan.current.y;
-    groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, lagX * CONFIG.tiltAmt, 0.07);
-    groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, lagY * CONFIG.tiltAmt, 0.07);
-
-    // ── Update tile positions with infinite wrap ──
-    groupRef.current.children.forEach((child, i) => {
-      const item = items[i];
-      if (!item) return;
-
-      let wx = item.baseX + currentPan.current.x;
-      let wy = item.baseY + currentPan.current.y;
-
-      // Modulo wrap — infinite in both X and Y
-      wx = (((wx + totalW / 2) % totalW) + totalW) % totalW - totalW / 2;
-      wy = (((wy + totalH / 2) % totalH) + totalH) % totalH - totalH / 2;
-
-      child.position.x = wx;
-      child.position.y = wy;
-    });
-  });
+  }, [layout, isMobile]);
 
   return (
-    <group ref={groupRef}>
-      {items.map((item, i) => (
-        <TileMesh
-          key={i}
-          project={item.project}
-          position={[item.baseX, item.baseY, 0]}
-          gridPos={{ col: item.col, row: item.row }}
-          onProjectClick={onProjectClick}
-        />
-      ))}
-    </group>
-  );
-};
-
-// ─── CAMERA SETUP ─────────────────────────────────────────────────────────────
-const CameraSetup = () => {
-  const { camera } = useThree();
-  useEffect(() => {
-    camera.position.set(0, 0, 9);
-    camera.fov = 58;
-    camera.updateProjectionMatrix();
-  }, [camera]);
-  return null;
-};
-
-// ─── PROJECT MODAL ────────────────────────────────────────────────────────────
-const ProjectModal = ({ project, onClose }) => {
-  useEffect(() => {
-    const onKey = (e) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  return (
-    <div
-      className="fixed inset-0 z-[200] flex items-center justify-center"
-      style={{ background: "rgba(0,0,0,0.9)", backdropFilter: "blur(12px)" }}
-      onClick={onClose}
-    >
-      <div
-        className="relative max-w-xl w-full mx-6 overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-        style={{ animation: "modalIn 0.35s cubic-bezier(0.25,0.46,0.45,0.94) forwards" }}
+    <section ref={sectionRef} className={`relative w-full h-screen bg-[#050505] overflow-hidden ${isMobile ? '' : 'cursor-none'}`}>
+      
+      {/* ─── NAVIGATION HINT ─── */}
+      <div 
+        ref={hintRef} 
+        className={`${isMobile 
+            ? 'fixed bottom-10 left-1/2 -translate-x-1/2 flex-row border-t border-b border-[#d4f500]/20 py-2' 
+            : 'fixed top-0 left-0 flex-col -translate-x-1/2 -translate-y-1/2'} 
+            z-[110] pointer-events-none flex items-center gap-3 transition-opacity duration-500`}
       >
-        <img src={project.url} alt="" className="w-full object-cover" style={{ maxHeight: "65vh" }} />
-        <div
-          className="absolute inset-0 flex flex-col justify-end p-5"
-          style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 50%)" }}
-        >
-          <p className="font-mono text-[8px] text-white/40 uppercase tracking-[0.35em] mb-1">
-            {project.client} · {project.year}
-          </p>
-          <div className="flex gap-1.5 flex-wrap">
-            {project.tags.map((t) => (
-              <span key={t} className="font-mono text-[6.5px] text-white/30 border border-white/10 px-1.5 py-0.5 uppercase tracking-widest">
-                {t}
-              </span>
-            ))}
-          </div>
+        <div className="w-8 h-8 md:w-10 md:h-10 border border-[#d4f500] rounded-full flex items-center justify-center bg-black/40 backdrop-blur-md">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d4f500" strokeWidth="2" className={isMobile ? 'animate-pulse' : ''}>
+                <path d="M15 18l-6-6 6-6" />
+                <path d="M9 18l6-6-6-6" className="opacity-30" />
+            </svg>
         </div>
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center border border-white/15 text-white/40 hover:text-white hover:border-white/35 transition-colors font-mono text-[9px]"
-        >
-          ✕
-        </button>
+        <span className="font-mono text-[7px] md:text-[8px] text-[#d4f500] uppercase tracking-[0.4em] whitespace-nowrap bg-black/80 px-3 py-1.5 rounded-sm">
+            {isMobile ? 'Swipe to explore' : 'Drag to explore'}
+        </span>
       </div>
-    </div>
+
+      {/* ─── STATIC UI ─── */}
+      <div className="absolute top-10 left-8 md:top-16 md:left-16 z-[100] pointer-events-none">
+        <div className="flex items-center gap-3 mb-2">
+            <div className="w-2 h-2 bg-[#d4f500] rounded-full shadow-[0_0_10px_#d4f500]" />
+            <span className="font-mono text-[8px] text-[#d4f500] tracking-[0.3em] uppercase">Archive_Map.v2</span>
+        </div>
+        <h2 className="font-display text-4xl md:text-7xl text-white tracking-tighter uppercase leading-[0.8] mix-blend-difference">
+          Selected <br/><span className="text-white/20">Works</span>
+        </h2>
+      </div>
+
+      {/* ─── 3D GALLERY WRAPPER ─── */}
+      <div ref={wrapperRef} className="w-full h-full perspective-[2000px]" style={{ transformStyle: 'preserve-3d' }}>
+        <div 
+            ref={gridRef} 
+            className="absolute top-0 left-0 flex flex-wrap will-change-transform"
+            style={{ 
+                width: layout.itemDim * layout.cols * 3, 
+                height: layout.itemDim * layout.rows * 3 
+            }}
+        >
+          {[...Array(9)].map((_, blockIdx) => (
+            <div 
+                key={blockIdx} 
+                className="grid"
+                style={{ 
+                    width: layout.itemDim * layout.cols, 
+                    height: layout.itemDim * layout.rows,
+                    gridTemplateColumns: `repeat(${layout.cols}, 1fr)`,
+                    gridTemplateRows: `repeat(${layout.rows}, 1fr)`
+                }}
+            >
+              {projects.map((project, i) => (
+                <div 
+                    key={`${blockIdx}-${i}`} 
+                    className="relative p-1.5 md:p-2 group active:scale-95 transition-transform duration-300"
+                    style={{ width: layout.itemDim, height: layout.itemDim }}
+                >
+                    <div className="w-full h-full bg-[#111] border border-white/5 relative overflow-hidden group-hover:border-[#d4f500]/40 transition-colors duration-500">
+                        <img 
+                            src={project.media} 
+                            alt={project.title}
+                            className="absolute inset-0 w-full h-full object-cover opacity-70 transition-all duration-700 pointer-events-none group-hover:scale-110 group-hover:opacity-100"
+                        />
+                        
+                        <div className="absolute inset-0 p-4 md:p-6 flex flex-col justify-between z-10 pointer-events-none">
+                            <div className="flex justify-between items-start">
+                                <span className="font-mono text-[7px] text-white/40 tracking-[0.2em]">{project.id}</span>
+                                <div className="w-1.5 h-1.5 border border-[#d4f500] rotate-45" />
+                            </div>
+
+                            <div className="bg-black/40 backdrop-blur-sm p-3 -mx-4 -mb-4 border-t border-white/5">
+                                <span className="font-mono text-[6px] text-[#d4f500] tracking-[0.4em] uppercase mb-1 block">
+                                    {project.tag}
+                                </span>
+                                <h3 className="font-display text-xl md:text-3xl text-white uppercase tracking-tighter leading-none">
+                                    {project.title}
+                                </h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ─── DECORATIVE CORNER ─── */}
+      <div className="absolute bottom-8 right-8 z-[100] hidden md:block">
+        <div className="flex items-center gap-4 font-mono text-[7px] text-white/20 tracking-[1em] uppercase">
+            <span>Selected Works</span>
+            <div className="w-12 h-px bg-white/10" />
+            <span></span>
+        </div>
+      </div>
+    </section>
   );
 };
 
-// ─── MAIN ─────────────────────────────────────────────────────────────────────
-const WorksSection = () => {
-  const sectionRef = useRef(null);
-  const [isVisible, setIsVisible] = useState(false);
-  const [isAnimatingIn, setIsAnimatingIn] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [selectedProject, setSelectedProject] = useState(null);
-  const [cursorIn, setCursorIn] = useState(false);
-
-  // Intersection → trigger entrance
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          setTimeout(() => setIsAnimatingIn(true), 100);
-        }
-      },
-      { threshold: 0.1 }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-
-  // Drag state for cursor
-  useEffect(() => {
-    const dn = () => setIsDragging(true);
-    const up = () => setIsDragging(false);
-    window.addEventListener("mousedown", dn);
-    window.addEventListener("mouseup", up);
-    return () => { window.removeEventListener("mousedown", dn); window.removeEventListener("mouseup", up); };
-  }, []);
-
-  return (
-    <>
-      <style>{`
-        @keyframes modalIn {
-          from { opacity:0; transform:scale(0.96) translateY(10px); }
-          to   { opacity:1; transform:scale(1) translateY(0); }
-        }
-        @keyframes fadeUp {
-          from { opacity:0; transform:translateY(10px); }
-          to   { opacity:1; transform:translateY(0); }
-        }
-      `}</style>
-
-      {cursorIn && <CustomCursor isDragging={isDragging} />}
-
-      {selectedProject && (
-        <ProjectModal project={selectedProject} onClose={() => setSelectedProject(null)} />
-      )}
-
-      <section
-        ref={sectionRef}
-        className="relative w-full bg-[#0d0d0d] overflow-hidden"
-        style={{ height: "100vh", cursor: cursorIn ? "none" : "auto" }}
-        onMouseEnter={() => setCursorIn(true)}
-        onMouseLeave={() => setCursorIn(false)}
-      >
-        {/* ── CANVAS ── */}
-        <Canvas
-          dpr={[1, 1.5]}
-          gl={{ antialias: true, powerPreference: "high-performance", alpha: false }}
-          frameloop="always"
-        >
-          <color attach="background" args={["#0d0d0d"]} />
-          <CameraSetup />
-          <InfiniteScene
-            onProjectClick={(p) => setSelectedProject(p)}
-            isAnimatingIn={isAnimatingIn}
-          />
-        </Canvas>
-
-        {/* ── EDGE MASKS ── */}
-        <div className="absolute inset-0 pointer-events-none z-10"
-          style={{ background: "radial-gradient(ellipse 90% 85% at 50% 50%, transparent 60%, #0d0d0d 100%)" }}
-        />
-
-        {/* ── TOP LABEL ── */}
-        <div
-          className="absolute top-7 left-8 z-20 pointer-events-none"
-          style={{ animation: isAnimatingIn ? "fadeUp 0.7s 0.3s both" : "none" }}
-        >
-          <div className="flex items-center gap-2">
-            <div className="w-1 h-1 rounded-full bg-white/30 animate-pulse" />
-            <span className="font-mono text-[8px] text-white/30 uppercase tracking-[0.5em]">
-              Selected Works
-            </span>
-          </div>
-        </div>
-
-        {/* ── PROJECT COUNT ── */}
-        <div
-          className="absolute top-7 right-8 z-20 pointer-events-none"
-          style={{ animation: isAnimatingIn ? "fadeUp 0.7s 0.4s both" : "none" }}
-        >
-          <span className="font-mono text-[8px] text-white/20 uppercase tracking-[0.35em]">
-            {PROJECTS.length} Projects
-          </span>
-        </div>
-
-        {/* ── DRAG HINT ── */}
-        <div
-          className="absolute bottom-7 left-1/2 -translate-x-1/2 z-20 pointer-events-none"
-          style={{
-            animation: isAnimatingIn ? "fadeUp 0.7s 0.6s both" : "none",
-            opacity: isDragging ? 0 : 1,
-            transition: "opacity 0.4s",
-          }}
-        >
-          <div className="flex items-center gap-3">
-            <div className="h-px w-5 bg-white/10" />
-            <span className="font-mono text-[7px] text-white/20 uppercase tracking-[0.45em]">
-              Drag to explore
-            </span>
-            <div className="h-px w-5 bg-white/10" />
-          </div>
-        </div>
-      </section>
-    </>
-  );
-};
-
-export default WorksSection;
+export default WorkGallery;
