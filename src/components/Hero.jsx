@@ -240,9 +240,27 @@ const MusicWave = () => {
 };
 
 const PANELS = [
-    { top: 'CREATING', topAccent: false, bottom: 'HUMAN', bottomAccent: true, tag: 'Brand Strategist · Digital Marketer' },
-    { top: 'CENTRIC',  topAccent: true, bottom: 'DESIGN', bottomAccent: false, tag: 'Web · Graphic · Mobile UI/UX' },
-    { top: 'DIGITAL',  topAccent: false, bottom: 'EXPERIENCES', bottomAccent: true, tag: 'App Design · Motion · Systems' },
+  {
+    top: 'BUILDING',
+    topAccent: false,
+    bottom: 'CULTURE',
+    bottomAccent: true,
+    tag: 'Strategy · Branding · Digital Presence',
+  },
+  {
+    top: 'DESIGNING',
+    topAccent: true,
+    bottom: 'FUTURES',
+    bottomAccent: false,
+    tag: 'Motion · Experiences · Visual Systems',
+  },
+  {
+    top: 'POWERING',
+    topAccent: false,
+    bottom: 'INNOVATION',
+    bottomAccent: true,
+    tag: 'Creative Technology · AI · Interactive Media',
+  },
 ];
 
 const Hero = () => {

@@ -10,6 +10,7 @@ const ServicesSection = () => {
   const revealRefs = useRef([]);
   const contentRefs = useRef([]);
   const imageRefs = useRef([]);
+  const progressRefs = useRef([]); // Refs for the status segments
 
   const services = [
     {
@@ -42,12 +43,21 @@ const ServicesSection = () => {
         start: "top top",
         end: () => `+=${services.length * 100}%`,
         pin: true,
-        scrub: 1, // Increased scrub for smoother "weight"
+        scrub: 1,
         anticipatePin: 1,
       }
     });
 
-    // We animate from the second service onwards
+    // ─── ANIMATE PROGRESS BARS (WhatsApp Style) ───
+    services.forEach((_, i) => {
+        tl.to(progressRefs.current[i], {
+            scaleX: 1,
+            ease: "none",
+            duration: 1 // Each segment takes 1 unit of the timeline
+        }, i); // Each starts filling at the start of its index
+    });
+
+    // ─── REVEAL SERVICES ───
     services.forEach((_, i) => {
       if (i === 0) return;
 
@@ -55,16 +65,15 @@ const ServicesSection = () => {
       const content = contentRefs.current[i];
       const image = imageRefs.current[i];
 
-      // THE REVEAL SEQUENCE
       tl.fromTo(section, 
         { clipPath: 'inset(100% 0% 0% 0%)' }, 
         { clipPath: 'inset(0% 0% 0% 0%)', ease: 'none' }, 
-        i // Start at the current index in timeline
+        i 
       )
       .fromTo(content,
         { opacity: 0, y: 40, filter: 'blur(10px)' },
         { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.6 },
-        i + 0.2 // Slight delay after curtain starts moving
+        i + 0.2 
       )
       .fromTo(image,
         { opacity: 0, scale: 1.1 },
@@ -77,6 +86,29 @@ const ServicesSection = () => {
   return (
     <section ref={containerRef} className="relative h-screen w-full bg-[#0a0a0a] overflow-hidden">
       
+      {/* ─── WHATSAPP TIMELINE NAVIGATION ─── */}
+      <div className="absolute top-10 left-8 right-8 md:left-20 md:right-20 z-[101] flex flex-col gap-4">
+         <div className="flex items-center justify-between">
+            <h3 className="font-mono text-[9px] text-[#d4f500] tracking-[0.7em] uppercase">
+                What I Do
+            </h3>
+            <span className="font-mono text-[8px] text-white/20 tracking-tighter uppercase">
+                Capabilities Matrix // 2024
+            </span>
+         </div>
+         
+         <div className="flex gap-2 w-full h-[2px]">
+            {services.map((_, i) => (
+                <div key={i} className="flex-1 bg-white/5 h-full relative overflow-hidden rounded-full">
+                    <div 
+                        ref={el => progressRefs.current[i] = el}
+                        className="absolute inset-0 bg-[#d4f500] origin-left scale-x-0"
+                    />
+                </div>
+            ))}
+         </div>
+      </div>
+
       {services.map((service, i) => (
         <div 
           key={i}
@@ -110,7 +142,6 @@ const ServicesSection = () => {
                 </div>
               </div>
 
-              {/* Vertical Grid Line decoration */}
               <div className="absolute left-0 top-0 h-full w-px bg-white/5" />
             </div>
 
@@ -122,14 +153,13 @@ const ServicesSection = () => {
                     alt={service.title}
                     className="h-full w-full object-cover grayscale brightness-[0.4]"
                 />
-                {/* Visual mask to blend image into center */}
                 <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-transparent to-transparent md:from-[#0a0a0a]" />
             </div>
           </div>
         </div>
       ))}
 
-      {/* Background Decor (Persistent across sections) */}
+      {/* Background Decor */}
       <div className="absolute bottom-10 right-10 z-[100]">
          <div className="font-mono text-[8px] text-[#d4f500]/30 uppercase tracking-[0.5em] flex items-center gap-3">
            <span className="w-8 h-px bg-[#d4f500]/20" /> Service Protocol 04

@@ -7,7 +7,8 @@ import Hero            from './components/Hero';
 import MarqueeSection  from './components/MarqueeSection';
 import ServicesSection from './components/ServicesSection';
 import CustomCursor from './components/ui/CustomCursor';
- import About        from './components/About';
+import WorksGallery from './components/WorksGallery';
+import About        from './components/About';
 
 // import Projects     from './components/Projects';
 // import Contact      from './components/Contact';
@@ -35,11 +36,17 @@ const App = () => {
         className={`transition-opacity duration-500 ${
           curtainDone ? 'opacity-100' : 'opacity-0'
         }`}
-      > <CustomCursor />
+      >
+        <CustomCursor
+         color="#d6ed29"
+         size={64}
+         lag={0.8}
+         showCoords={false}
+        />
         <Hero />
         <MarqueeSection />
         <ServicesSection />
-        
+        <WorksGallery />
         <About />
         {/* <About />    */}
         {/* <Projects /> */}
