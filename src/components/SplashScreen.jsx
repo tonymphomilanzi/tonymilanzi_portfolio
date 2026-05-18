@@ -166,12 +166,14 @@ const SplashScreen = ({ onComplete }) => {
           </div>
         </div>
 
-        <p ref={taglineRef} className="mt-8 text-[11px] uppercase text-white/60 font-mono tracking-[0.5em]">
-       <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-white/40">
+       
+  <p
+  ref={taglineRef}
+  className="mt-8 font-mono text-[10px] uppercase tracking-[0.25em] text-white/40"
+>
   Brand Strategist · Creative Technologist · Experience Architect
 </p>
 
-        </p>
         
         <div ref={barRef} className="relative mt-12 h-[1px] bg-white/10 overflow-hidden">
           <div ref={barFillRef} className="absolute top-0 left-0 h-full w-0 bg-[#d4f500]" />

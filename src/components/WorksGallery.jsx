@@ -39,7 +39,7 @@ const WorksGallery = () => {
   const wrapperRef = useRef(null);
   const gridRef = useRef(null);
   const hintRef = useRef(null);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   
   const state = useRef({
     targetX: 0, targetY: 0,
@@ -48,63 +48,78 @@ const WorksGallery = () => {
     isDown: false,
     BW: 0, BH: 0,
     dragStartPos: { x: 0, y: 0 },
-    initialized: false // Prevent resetting positions on every re-render
+    initialized: false
   });
 
   useEffect(() => {
-    const checkMobile = () => {
-        const mobile = window.innerWidth < 768;
-        if (mobile !== isMobile) setIsMobile(mobile);
-    };
-    checkMobile();
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
-  }, [isMobile]);
+  }, []);
 
   useGSAP(() => {
     const grid = gridRef.current;
+    
+    // ─── 1. DIMENSIONS ───
     const itemW = isMobile ? window.innerWidth * 0.75 : window.innerWidth * 0.3;
     const itemH = isMobile ? window.innerWidth * 0.75 : window.innerHeight * 0.4;
-    
     state.current.BW = itemW * GALLERY_CONFIG.columnsPerBlock;
     state.current.BH = itemH * GALLERY_CONFIG.rowsPerBlock;
     
-    // Only set initial position once to prevent "jumping" during resize/scroll
     if (!state.current.initialized) {
         state.current.targetX = state.current.currentX = -state.current.BW;
         state.current.targetY = state.current.currentY = -state.current.BH;
         state.current.initialized = true;
     }
 
-    // ─── CURSOR HINT ───
+    // ─── 2. HINT VISIBILITY LOGIC (Fix for ghost hint) ───
+    gsap.set(hintRef.current, { autoAlpha: 0 }); // Start hidden
+
+    ScrollTrigger.create({
+        trigger: sectionRef.current,
+        start: "top bottom", // show as soon as section enters from bottom
+        end: "bottom top",   // hide as soon as section leaves top
+        onToggle: (self) => {
+            // Only show if the section is actually visible on screen
+            gsap.to(hintRef.current, { autoAlpha: self.isActive ? 1 : 0, duration: 0.4 });
+        }
+    });
+
     if (!isMobile) {
         const xTo = gsap.quickTo(hintRef.current, "x", { duration: 0.4, ease: "power3" });
         const yTo = gsap.quickTo(hintRef.current, "y", { duration: 0.4, ease: "power3" });
         const onMouseMove = (e) => { xTo(e.clientX); yTo(e.clientY); };
-        sectionRef.current.addEventListener('mouseenter', () => gsap.to(hintRef.current, { autoAlpha: 1, scale: 1 }));
-        sectionRef.current.addEventListener('mouseleave', () => gsap.to(hintRef.current, { autoAlpha: 0, scale: 0.5 }));
         window.addEventListener('mousemove', onMouseMove);
-    } else {
-        gsap.set(hintRef.current, { autoAlpha: 1, scale: 1 });
     }
 
-    // ─── SCROLL REVEAL (STABLE VERSION) ───
-    const revealAnim = gsap.fromTo(wrapperRef.current, 
-        { scale: 0.8, rotationX: 15, opacity: 0 },
-        { scale: 1, rotationX: 0, opacity: 1, ease: "power2.out", paused: isMobile }
-    );
+    // ─── 3. STABLE REVEAL ───
+    if (isMobile) {
+        gsap.fromTo(wrapperRef.current, 
+            { scale: 0.8, opacity: 0 },
+            { 
+              scale: 1, opacity: 1, duration: 1, ease: "power3.out",
+              scrollTrigger: {
+                trigger: sectionRef.current,
+                start: "top 85%",
+                toggleActions: "play none none reverse"
+              }
+            }
+        );
+    } else {
+        ScrollTrigger.create({
+          trigger: sectionRef.current,
+          start: "top top",
+          end: "+=120%",
+          pin: true,
+          scrub: 1,
+          animation: gsap.fromTo(wrapperRef.current, 
+            { scale: 0.85, rotationX: 15, opacity: 0 },
+            { scale: 1, rotationX: 0, opacity: 1, ease: "power2.out" }
+          ),
+        });
+    }
 
-    ScrollTrigger.create({
-      trigger: sectionRef.current,
-      start: isMobile ? "top 85%" : "top top", 
-      end: isMobile ? "bottom top" : "+=120%",
-      pin: !isMobile, // NEVER PIN ON MOBILE (Causes the bounce)
-      scrub: !isMobile, // Scrubbing on mobile causes the "reset" glitch
-      animation: !isMobile ? revealAnim : null,
-      onEnter: () => isMobile && revealAnim.play(), // Just play once on mobile
-      onLeaveBack: () => isMobile && revealAnim.reverse(),
-    });
-
+    // ─── 4. INTERACTION ───
     const setX = gsap.quickSetter(grid, "x", "px");
     const setY = gsap.quickSetter(grid, "y", "px");
 
@@ -120,7 +135,7 @@ const WorksGallery = () => {
       if (s.targetY < -s.BH * 2) { s.targetY += s.BH; s.currentY += s.BH; }
 
       s.currentX += (s.targetX - s.currentX) * GALLERY_CONFIG.friction;
-      s.currentY += (state.current.targetY - s.currentY) * GALLERY_CONFIG.friction;
+      s.currentY += (s.targetY - s.currentY) * GALLERY_CONFIG.friction;
       setX(s.currentX);
       setY(s.currentY);
     };
@@ -180,18 +195,23 @@ const WorksGallery = () => {
   const itemH = isMobile ? GALLERY_CONFIG.mobileItemDim : GALLERY_CONFIG.itemHeight;
 
   return (
-    <section ref={sectionRef} className={`relative w-full h-screen bg-[#050505] overflow-hidden ${isMobile ? '' : 'cursor-none'}`}>
+    <section ref={sectionRef} className={`relative w-full h-[85vh] md:h-screen bg-[#050505] overflow-hidden ${isMobile ? '' : 'cursor-none'}`}>
       
+      {/* ─── HINT ─── */}
       <div 
         ref={hintRef} 
-        className={`${isMobile ? 'fixed bottom-10 left-1/2 -translate-x-1/2 flex-row border border-[#d4f500]/20 rounded-full px-4 py-2 opacity-100' : 'fixed top-0 left-0 flex-col -translate-x-1/2 -translate-y-1/2 opacity-0'} z-[110] pointer-events-none flex items-center gap-2`}
+        style={{ zIndex: 200 }}
+        className={`${isMobile 
+          ? 'fixed bottom-10 left-1/2 -translate-x-1/2 flex flex-row border border-[#d4f500]/20 rounded-full px-4 py-2 bg-black/60 backdrop-blur-md' 
+          : 'fixed top-0 left-0 flex flex-col -translate-x-1/2 -translate-y-1/2'} 
+          pointer-events-none items-center gap-2`}
       >
-        <div className="w-8 h-8 md:w-10 md:h-10 border border-[#d4f500] rounded-full flex items-center justify-center bg-black/40 backdrop-blur-md">
+        <div className="w-8 h-8 md:w-10 md:h-10 border border-[#d4f500] rounded-full flex items-center justify-center">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d4f500" strokeWidth="2" className={isMobile ? 'animate-pulse' : ''}>
                 <path d="M15 18l-6-6 6-6" /><path d="M9 18l6-6-6-6" className="opacity-30" />
             </svg>
         </div>
-        <span className="font-mono text-[7px] text-[#d4f500] uppercase tracking-[0.3em] bg-black/80 px-2 py-1">
+        <span className="font-mono text-[7px] text-[#d4f500] uppercase tracking-[0.3em] whitespace-nowrap">
             {isMobile ? 'Swipe to explore' : 'Click to Open'}
         </span>
       </div>
@@ -202,7 +222,10 @@ const WorksGallery = () => {
 
       <div ref={wrapperRef} className="w-full h-full perspective-[2000px]" style={{ transformStyle: 'preserve-3d' }}>
         <div ref={gridRef} className="absolute top-0 left-0 flex flex-wrap cursor-grab touch-none"
-             style={{ width: `calc(${itemW} * ${GALLERY_CONFIG.columnsPerBlock} * 3)`, height: `calc(${itemH} * ${GALLERY_CONFIG.rowsPerBlock} * 3)` }}>
+             style={{ 
+               width: `calc(${itemW} * ${GALLERY_CONFIG.columnsPerBlock} * 3)`, 
+               height: `calc(${itemH} * ${GALLERY_CONFIG.rowsPerBlock} * 3)` 
+             }}>
           {[...Array(9)].map((_, blockIdx) => (
             <div key={blockIdx} className="grid" style={{ width: `calc(${itemW} * ${GALLERY_CONFIG.columnsPerBlock})`, height: `calc(${itemH} * ${GALLERY_CONFIG.rowsPerBlock})`, gridTemplateColumns: `repeat(${GALLERY_CONFIG.columnsPerBlock}, 1fr)`, gridTemplateRows: `repeat(${GALLERY_CONFIG.rowsPerBlock}, 1fr)` }}>
               {projects.map((project, i) => (
