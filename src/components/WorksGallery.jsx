@@ -2,159 +2,179 @@ import React, { useRef, useState, useEffect } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useNavigate } from 'react-router-dom'; 
 
 gsap.registerPlugin(ScrollTrigger);
 
-// ─── CONFIGURATION ─────────────────────────────────────────────────────────
 const GALLERY_CONFIG = {
   itemWidth: '30vw',       
   itemHeight: '40vh',      
-  mobileItemDim: '70vw',   // Square dimension for mobile
+  mobileItemDim: '75vw',   
   autoMove: true,          
-  driftSpeedX: 0.4,        
-  driftSpeedY: 0.2,        
-  friction: 0.08,          
+  driftSpeedX: 0.3,        
+  driftSpeedY: 0.15,        
+  friction: 0.12,          
   columnsPerBlock: 4,      
   rowsPerBlock: 3,         
 };
 
 const projects = [
-  { id: '01', title: 'AURA', tag: 'Web / WebGL', media: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNGJxeXNwaHlyZ2N6bmJ6YXR3YmJ6bmJ6YXR3YmJ6bmJ6YXR3YmJ6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/3o7TKMGpxxZESnlIQg/giphy.gif' },
-  { id: '02', title: 'NEXUS', tag: 'Identity', media: 'https://images.unsplash.com/photo-1558655146-d09347e92766?q=80&w=600' },
-  { id: '03', title: 'LUMINA', tag: 'E-Commerce', media: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNGJxeXNwaHlyZ2N6bmJ6YXR3YmJ6bmJ6YXR3YmJ6bmJ6YXR3YmJ6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/l41lTfuxZ75zC0nSg/giphy.gif' },
-  { id: '04', title: 'ECHO', tag: '3D Motion', media: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=600' },
-  { id: '05', title: 'SYNTH', tag: 'UI System', media: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNGJxeXNwaHlyZ2N6bmJ6YXR3YmJ6bmJ6YXR3YmJ6bmJ6YXR3YmJ6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/3o7TKVUn7iM8FMEU24/giphy.gif' },
-  { id: '06', title: 'VERTEX', tag: 'Branding', media: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=600' },
-  { id: '07', title: 'QUANTUM', tag: 'Spatial', media: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600' },
-  { id: '08', title: 'PULSE', tag: 'App Design', media: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNGJxeXNwaHlyZ2N6bmJ6YXR3YmJ6bmJ6YXR3YmJ6bmJ6YXR3YmJ6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/xT9IgN8YKUIqYIK4Jq/giphy.gif' },
-  { id: '09', title: 'CRUX', tag: 'Campaign', media: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=600' },
-  { id: '10', title: 'OMNI', tag: 'Platform', media: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=600' },
-  { id: '11', title: 'FLUX', tag: 'Identity', media: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=600' },
-  { id: '12', title: 'NOVA', tag: 'Motion', media: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=600' },
+    { id: '01', slug: 'aura', title: 'AURA', tag: 'Web / WebGL', media: 'assets/projects/1.png' },
+    { id: '02', slug: 'nexus', title: 'NEXUS', tag: 'Identity / Product', media: 'assets/projects/2.png' },
+    { id: '03', slug: 'vortex', title: 'VORTEX', tag: 'Motion / Film', media: 'assets/projects/3.png' },
+    { id: '04', slug: 'echo', title: 'ECHO', tag: 'Experiential / Installation', media: 'assets/projects/4.png' },
+    { id: '05', slug: 'nova', title: 'NOVA', tag: 'Branding / Strategy', media: 'assets/projects/5.png' },
+    { id: '06', slug: 'pulse', title: 'PULSE', tag: 'UI/UX / App Design', media: 'assets/projects/6.png' },
+    { id: '07', slug: 'zenith', title: 'ZENITH', tag: 'AR / Mobile', media: 'assets/projects/7.png' },
+    { id: '08', slug: 'aether', title: 'AETHER', tag: 'Data Visualization', media: 'assets/projects/8.png' },
+    { id: '09', slug: 'lumen', title: 'LUMEN', tag: 'Packaging / Product', media: 'assets/projects/9.png' },
+    { id: '10', slug: 'orbit', title: 'ORBIT', tag: 'Interactive / Web', media: 'assets/projects/10.png' },
+    { id: '11', slug: 'prism', title: 'PRISM', tag: 'Print / Editorial', media: 'assets/projects/11.png' },
+    { id: '12', slug: 'flux', title: 'FLUX', tag: 'Experimental / Concept', media: 'assets/projects/12.png' },
 ];
 
-const WorkGallery = () => {
+const WorksGallery = () => {
+  const navigate = useNavigate();
   const sectionRef = useRef(null);
-  const galleryWrapperRef = useRef(null);
+  const wrapperRef = useRef(null);
   const gridRef = useRef(null);
   const hintRef = useRef(null);
   const [isMobile, setIsMobile] = useState(false);
+  
+  const state = useRef({
+    targetX: 0, targetY: 0,
+    currentX: 0, currentY: 0,
+    lastMouseX: 0, lastMouseY: 0,
+    isDown: false,
+    BW: 0, BH: 0,
+    dragStartPos: { x: 0, y: 0 },
+    initialized: false // Prevent resetting positions on every re-render
+  });
 
-  // Handle Responsive Check
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    const checkMobile = () => {
+        const mobile = window.innerWidth < 768;
+        if (mobile !== isMobile) setIsMobile(mobile);
+    };
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  }, [isMobile]);
 
   useGSAP(() => {
-    // ─── 1. CURSOR HINT FOLLOW (Desktop Only) ───
-    const moveHint = (e) => {
-      if (isMobile) return;
-      gsap.to(hintRef.current, {
-        x: e.clientX,
-        y: e.clientY,
-        duration: 0.6,
-        ease: "power3.out"
-      });
-    };
-    window.addEventListener('mousemove', moveHint);
+    const grid = gridRef.current;
+    const itemW = isMobile ? window.innerWidth * 0.75 : window.innerWidth * 0.3;
+    const itemH = isMobile ? window.innerWidth * 0.75 : window.innerHeight * 0.4;
+    
+    state.current.BW = itemW * GALLERY_CONFIG.columnsPerBlock;
+    state.current.BH = itemH * GALLERY_CONFIG.rowsPerBlock;
+    
+    // Only set initial position once to prevent "jumping" during resize/scroll
+    if (!state.current.initialized) {
+        state.current.targetX = state.current.currentX = -state.current.BW;
+        state.current.targetY = state.current.currentY = -state.current.BH;
+        state.current.initialized = true;
+    }
 
-    // ─── 2. SCROLL ENTRY ───
+    // ─── CURSOR HINT ───
+    if (!isMobile) {
+        const xTo = gsap.quickTo(hintRef.current, "x", { duration: 0.4, ease: "power3" });
+        const yTo = gsap.quickTo(hintRef.current, "y", { duration: 0.4, ease: "power3" });
+        const onMouseMove = (e) => { xTo(e.clientX); yTo(e.clientY); };
+        sectionRef.current.addEventListener('mouseenter', () => gsap.to(hintRef.current, { autoAlpha: 1, scale: 1 }));
+        sectionRef.current.addEventListener('mouseleave', () => gsap.to(hintRef.current, { autoAlpha: 0, scale: 0.5 }));
+        window.addEventListener('mousemove', onMouseMove);
+    } else {
+        gsap.set(hintRef.current, { autoAlpha: 1, scale: 1 });
+    }
+
+    // ─── SCROLL REVEAL (STABLE VERSION) ───
+    const revealAnim = gsap.fromTo(wrapperRef.current, 
+        { scale: 0.8, rotationX: 15, opacity: 0 },
+        { scale: 1, rotationX: 0, opacity: 1, ease: "power2.out", paused: isMobile }
+    );
+
     ScrollTrigger.create({
       trigger: sectionRef.current,
-      start: "top top",
-      end: "+=120%",
-      pin: true,
-      animation: gsap.fromTo(galleryWrapperRef.current, 
-        { scale: 0.8, rotationX: 25, opacity: 0, y: 200 },
-        { scale: 1, rotationX: 0, opacity: 1, y: 0, ease: "power2.out" }
-      ),
-      scrub: 1,
+      start: isMobile ? "top 85%" : "top top", 
+      end: isMobile ? "bottom top" : "+=120%",
+      pin: !isMobile, // NEVER PIN ON MOBILE (Causes the bounce)
+      scrub: !isMobile, // Scrubbing on mobile causes the "reset" glitch
+      animation: !isMobile ? revealAnim : null,
+      onEnter: () => isMobile && revealAnim.play(), // Just play once on mobile
+      onLeaveBack: () => isMobile && revealAnim.reverse(),
     });
 
-    // ─── 3. INFINITE PAN LOGIC ───
-    const grid = gridRef.current;
-    
-    // Calculate Responsive Dimensions
-    const getBW = () => {
-        const val = isMobile ? GALLERY_CONFIG.mobileItemDim : GALLERY_CONFIG.itemWidth;
-        return (window.innerWidth * parseFloat(val) / 100) * GALLERY_CONFIG.columnsPerBlock;
-    }
-    const getBH = () => {
-        const val = isMobile ? GALLERY_CONFIG.mobileItemDim : GALLERY_CONFIG.itemHeight;
-        return (isMobile ? window.innerWidth : window.innerHeight) * (parseFloat(val) / 100) * GALLERY_CONFIG.rowsPerBlock;
-    }
-
-    let BW = getBW();
-    let BH = getBH();
-
-    let targetX = -BW;
-    let targetY = -BH;
-    let currentX = -BW;
-    let currentY = -BH;
-    let isDragging = false;
-    let startX = 0;
-    let startY = 0;
-
-    const onResize = () => { BW = getBW(); BH = getBH(); };
-    window.addEventListener('resize', onResize);
+    const setX = gsap.quickSetter(grid, "x", "px");
+    const setY = gsap.quickSetter(grid, "y", "px");
 
     const ticker = () => {
-      if (!isDragging && GALLERY_CONFIG.autoMove) {
-        targetX -= GALLERY_CONFIG.driftSpeedX;
-        targetY -= GALLERY_CONFIG.driftSpeedY;
+      const s = state.current;
+      if (!s.isDown && GALLERY_CONFIG.autoMove) {
+        s.targetX -= GALLERY_CONFIG.driftSpeedX;
+        s.targetY -= GALLERY_CONFIG.driftSpeedY;
       }
+      if (s.targetX > 0) { s.targetX -= s.BW; s.currentX -= s.BW; }
+      if (s.targetX < -s.BW * 2) { s.targetX += s.BW; s.currentX += s.BW; }
+      if (s.targetY > 0) { s.targetY -= s.BH; s.currentY -= s.BH; }
+      if (s.targetY < -s.BH * 2) { s.targetY += s.BH; s.currentY += s.BH; }
 
-      if (targetX > 0) { targetX -= BW; currentX -= BW; }
-      if (targetX < -BW * 2) { targetX += BW; currentX += BW; }
-      if (targetY > 0) { targetY -= BH; currentY -= BH; }
-      if (targetY < -BH * 2) { targetY += BH; currentY += BH; }
-
-      currentX += (targetX - currentX) * GALLERY_CONFIG.friction;
-      currentY += (targetY - currentY) * GALLERY_CONFIG.friction;
-
-      gsap.set(grid, { x: currentX, y: currentY });
+      s.currentX += (s.targetX - s.currentX) * GALLERY_CONFIG.friction;
+      s.currentY += (state.current.targetY - s.currentY) * GALLERY_CONFIG.friction;
+      setX(s.currentX);
+      setY(s.currentY);
     };
 
     gsap.ticker.add(ticker);
 
     const onPointerDown = (e) => {
-      isDragging = true;
-      startX = (e.clientX || e.touches?.[0].clientX) - targetX;
-      startY = (e.clientY || e.touches?.[0].clientY) - targetY;
-      if (!isMobile) gsap.to(hintRef.current, { scale: 0.8, opacity: 0.5, duration: 0.2 });
+        state.current.isDown = true;
+        const x = e.clientX || e.touches?.[0].clientX;
+        const y = e.clientY || e.touches?.[0].clientY;
+        state.current.lastMouseX = x;
+        state.current.lastMouseY = y;
+        state.current.dragStartPos = { x, y };
     };
 
     const onPointerMove = (e) => {
-      if (!isDragging) return;
-      targetX = (e.clientX || e.touches?.[0].clientX) - startX;
-      targetY = (e.clientY || e.touches?.[0].clientY) - startY;
+        if (!state.current.isDown) return;
+        const x = e.clientX || e.touches?.[0].clientX;
+        const y = e.clientY || e.touches?.[0].clientY;
+        state.current.targetX += x - state.current.lastMouseX;
+        state.current.targetY += y - state.current.lastMouseY;
+        state.current.lastMouseX = x;
+        state.current.lastMouseY = y;
     };
 
-    const onPointerUp = () => {
-      isDragging = false;
-      if (!isMobile) gsap.to(hintRef.current, { scale: 1, opacity: 1, duration: 0.2 });
+    const onPointerUp = (e) => {
+        if (!state.current.isDown) return;
+        state.current.isDown = false;
+        const x = e.clientX || e.changedTouches?.[0].clientX;
+        const y = e.clientY || e.changedTouches?.[0].clientY;
+        const dist = Math.hypot(x - state.current.dragStartPos.x, y - state.current.dragStartPos.y);
+        
+        if (dist < 10) {
+            const projectCard = e.target.closest('[data-slug]');
+            if (projectCard) {
+                const slug = projectCard.getAttribute('data-slug');
+                sessionStorage.setItem('tony_milanzi_scroll_pos', window.scrollY);
+                navigate(`/work/${slug}`);
+            }
+        }
     };
 
     grid.addEventListener('pointerdown', onPointerDown);
     window.addEventListener('pointermove', onPointerMove);
     window.addEventListener('pointerup', onPointerUp);
-    // Touch support explicitly
     grid.addEventListener('touchstart', onPointerDown, { passive: true });
     window.addEventListener('touchmove', onPointerMove, { passive: true });
     window.addEventListener('touchend', onPointerUp);
 
     return () => {
-      window.removeEventListener('mousemove', moveHint);
-      window.removeEventListener('resize', onResize);
-      gsap.ticker.remove(ticker);
-      grid.removeEventListener('pointerdown', onPointerDown);
-      window.removeEventListener('pointermove', onPointerMove);
-      window.removeEventListener('pointerup', onPointerUp);
+        gsap.ticker.remove(ticker);
+        ScrollTrigger.getAll().forEach(t => t.kill());
     };
-  }, [isMobile]); // Re-run when switching mobile/desktop
+  }, [isMobile]); 
 
   const itemW = isMobile ? GALLERY_CONFIG.mobileItemDim : GALLERY_CONFIG.itemWidth;
   const itemH = isMobile ? GALLERY_CONFIG.mobileItemDim : GALLERY_CONFIG.itemHeight;
@@ -162,71 +182,41 @@ const WorkGallery = () => {
   return (
     <section ref={sectionRef} className={`relative w-full h-screen bg-[#050505] overflow-hidden ${isMobile ? '' : 'cursor-none'}`}>
       
-      {/* ─── RESPONSIVE HINT ─── */}
       <div 
         ref={hintRef} 
-        className={`${isMobile 
-            ? 'fixed bottom-10 left-1/2 -translate-x-1/2 flex-row border border-[#d4f500]/20 rounded-full px-4 py-2' 
-            : 'fixed top-0 left-0 flex-col -translate-x-1/2 -translate-y-1/2'} 
-            z-[110] pointer-events-none flex items-center gap-2 transition-all duration-300`}
+        className={`${isMobile ? 'fixed bottom-10 left-1/2 -translate-x-1/2 flex-row border border-[#d4f500]/20 rounded-full px-4 py-2 opacity-100' : 'fixed top-0 left-0 flex-col -translate-x-1/2 -translate-y-1/2 opacity-0'} z-[110] pointer-events-none flex items-center gap-2`}
       >
-        <div className="w-8 h-8 md:w-10 md:h-10 border border-[#d4f500] rounded-full flex items-center justify-center bg-black/20 backdrop-blur-sm">
+        <div className="w-8 h-8 md:w-10 md:h-10 border border-[#d4f500] rounded-full flex items-center justify-center bg-black/40 backdrop-blur-md">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#d4f500" strokeWidth="2" className={isMobile ? 'animate-pulse' : ''}>
-                <path d="M15 18l-6-6 6-6" />
-                <path d="M9 18l6-6-6-6" className="opacity-30" />
+                <path d="M15 18l-6-6 6-6" /><path d="M9 18l6-6-6-6" className="opacity-30" />
             </svg>
         </div>
-        <span className="font-mono text-[7px] text-[#d4f500] uppercase tracking-[0.3em] whitespace-nowrap bg-black/80 px-2 py-1">
-            {isMobile ? 'Swipe to Explore' : 'Drag to Explore'}
+        <span className="font-mono text-[7px] text-[#d4f500] uppercase tracking-[0.3em] bg-black/80 px-2 py-1">
+            {isMobile ? 'Swipe to explore' : 'Click to Open'}
         </span>
       </div>
 
-      <div className="absolute top-10 left-10 md:top-12 md:left-12 z-[100] pointer-events-none">
-        <h2 className="font-display text-4xl md:text-5xl text-white tracking-tighter uppercase leading-[0.8]">
-          Selected <br/><span className="text-[#d4f500]">Archives</span>
-        </h2>
+      <div className="absolute top-10 left-10 z-[100] pointer-events-none">
+        <h2 className="font-display text-4xl md:text-5xl text-white tracking-tighter uppercase leading-[0.8]">Selected <br/><span className="text-[#d4f500]">Projects</span></h2>
       </div>
 
-      <div ref={galleryWrapperRef} className="w-full h-full perspective-[2000px]" style={{ transformStyle: 'preserve-3d' }}>
-        <div 
-            ref={gridRef} 
-            className="absolute top-0 left-0 flex flex-wrap will-change-transform"
-            style={{ 
-                width: `calc(${itemW} * ${GALLERY_CONFIG.columnsPerBlock} * 3)`, 
-                height: `calc(${itemH} * ${GALLERY_CONFIG.rowsPerBlock} * 3)` 
-            }}
-        >
+      <div ref={wrapperRef} className="w-full h-full perspective-[2000px]" style={{ transformStyle: 'preserve-3d' }}>
+        <div ref={gridRef} className="absolute top-0 left-0 flex flex-wrap cursor-grab touch-none"
+             style={{ width: `calc(${itemW} * ${GALLERY_CONFIG.columnsPerBlock} * 3)`, height: `calc(${itemH} * ${GALLERY_CONFIG.rowsPerBlock} * 3)` }}>
           {[...Array(9)].map((_, blockIdx) => (
-            <div 
-                key={blockIdx} 
-                className="grid"
-                style={{ 
-                    width: `calc(${itemW} * ${GALLERY_CONFIG.columnsPerBlock})`, 
-                    height: `calc(${itemH} * ${GALLERY_CONFIG.rowsPerBlock})`,
-                    gridTemplateColumns: `repeat(${GALLERY_CONFIG.columnsPerBlock}, 1fr)`,
-                    gridTemplateRows: `repeat(${GALLERY_CONFIG.rowsPerBlock}, 1fr)`
-                }}
-            >
+            <div key={blockIdx} className="grid" style={{ width: `calc(${itemW} * ${GALLERY_CONFIG.columnsPerBlock})`, height: `calc(${itemH} * ${GALLERY_CONFIG.rowsPerBlock})`, gridTemplateColumns: `repeat(${GALLERY_CONFIG.columnsPerBlock}, 1fr)`, gridTemplateRows: `repeat(${GALLERY_CONFIG.rowsPerBlock}, 1fr)` }}>
               {projects.map((project, i) => (
-                <div key={`${blockIdx}-${i}`} className="relative p-1 md:p-2 group">
-                    <div className="w-full h-full bg-[#111] border border-white/5 relative overflow-hidden">
-                        <img 
-                            src={project.media} 
-                            alt={project.title}
-                            className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 pointer-events-none"
-                        />
-                        <div className="absolute inset-0 p-4 md:p-6 flex flex-col justify-between z-10 pointer-events-none">
+                <div key={`${blockIdx}-${i}`} data-slug={project.slug} className="relative p-1 md:p-2 group">
+                    <div className="w-full h-full bg-[#111] border border-white/5 relative overflow-hidden transition-colors duration-500 group-hover:border-[#d4f500]/50 pointer-events-none">
+                        <img src={project.media} alt={project.title} loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" />
+                        <div className="absolute inset-0 p-4 md:p-6 flex flex-col justify-between z-10">
                             <div className="flex justify-between items-start">
                                 <span className="font-mono text-[8px] text-white/40 tracking-[0.2em]">0{project.id}</span>
                                 <div className="w-1.5 h-1.5 bg-[#d4f500] rounded-full shadow-[0_0_8px_#d4f500]" />
                             </div>
-                            <div className="transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                                <span className="font-mono text-[7px] text-[#d4f500] tracking-[0.4em] uppercase mb-1 block opacity-70">
-                                    {project.tag}
-                                </span>
-                                <h3 className="font-display text-xl md:text-3xl text-white uppercase tracking-tighter leading-none">
-                                    {project.title}
-                                </h3>
+                            <div>
+                                <span className="font-mono text-[7px] text-[#d4f500] tracking-[0.4em] uppercase mb-1 block opacity-80">{project.tag}</span>
+                                <h3 className="font-display text-xl md:text-3xl text-white uppercase tracking-tighter leading-none">{project.title}</h3>
                             </div>
                         </div>
                     </div>
@@ -240,4 +230,4 @@ const WorkGallery = () => {
   );
 };
 
-export default WorkGallery;
+export default WorksGallery;
